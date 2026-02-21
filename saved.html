@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Saved Colors | ColorMatch Boutique</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <a href="index.html" class="back-btn">← Back to Home</a>
+      <h1>💎 My Saved Colors</h1>
+      <p>Your perfect matches</p>
+    </header>
+
+    <main>
+      <div class="swatches" id="saved-swatches">
+        <!-- Dynamic content -->
+      </div>
+    </main>
+
+    <footer>© 2026 ColorMatch Boutique</footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const saved = JSON.parse(localStorage.getItem("savedColors") || "[]");
+        const container = document.getElementById("saved-swatches");
+
+        const colors = {
+          "deep-red": "#8b0000",
+          emerald: "#50c878",
+          "royal-gold": "#b8860b",
+          burgundy: "#800020",
+          peach: "#ffdab9",
+          coral: "#ff7f50",
+          mustard: "#ffdb58",
+          terracotta: "#e2725b",
+          blue: "#87ceeb",
+          silver: "#c0c0c0",
+          lavender: "#e6e6fa",
+          teal: "#008080",
+          blush: "#ffc0cb",
+          beige: "#f5f5dc",
+          ivory: "#fffff0",
+          "baby-blue": "#89cff0",
+        };
+
+        if (saved.length === 0) {
+          container.innerHTML =
+            '<p style="text-align: center; color: #666; padding: 2rem;">No saved colors yet. <a href="index.html">Start shopping!</a></p>';
+        } else {
+          saved.forEach((colorName) => {
+            if (colors[colorName]) {
+              const swatch = document.createElement("div");
+              swatch.className = `swatch ${colorName}`;
+              swatch.title = `${colorName.charAt(0).toUpperCase() + colorName.slice(1).replace("-", " ")} ${colors[colorName]}`;
+              swatch.innerHTML = `<button class="try-btn ${colorName}-btn save-btn saved" data-color="${colorName}">✅ Saved</button>`;
+              container.appendChild(swatch);
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

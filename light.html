@@ -3,40 +3,119 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Light Skin Colors</title>
+    <title>Light Skin | ColorMatch Boutique</title>
+    <link rel="stylesheet" href="styles.css" />
     <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css" />
   </head>
-  <body class="light-body">
-    <a href="index.html" class="back-btn">← Back to Home</a>
+  <body class="light-page">
+    <header>
+      <a href="index.html" class="back-btn">← Back to Home</a>
+      <h1>✨ Light Skin</h1>
+      <p>Pastels & soft nude tones</p>
+    </header>
 
-    <div class="page-content">
-      <h1>✨ Light Skin Colors</h1>
-      <div class="color-grid">
-        <div class="color-card blush-card">
-          <div class="color-swatch blush"></div>
-          <h3>Blush Pink</h3>
-          <button class="buy-btn blush-btn">Shop Now</button>
+    <main>
+      <div class="swatches">
+        <div class="swatch blush" title="Blush #FFC0CB">
+          <button class="try-btn blush-btn save-btn" data-color="blush">
+            💾 Save for Later
+          </button>
         </div>
-        <div class="color-card beige-card">
-          <div class="color-swatch beige"></div>
-          <h3>Soft Beige</h3>
-          <button class="buy-btn beige-btn">Shop Now</button>
+        <div class="swatch beige" title="Beige #F5F5DC">
+          <button class="try-btn beige-btn save-btn" data-color="beige">
+            💾 Save for Later
+          </button>
         </div>
-        <div class="color-card ivory-card">
-          <div class="color-swatch ivory"></div>
-          <h3>Pure Ivory</h3>
-          <button class="buy-btn ivory-btn">Shop Now</button>
+        <div class="swatch ivory" title="Ivory #FFFFF0">
+          <button class="try-btn ivory-btn save-btn" data-color="ivory">
+            💾 Save for Later
+          </button>
         </div>
-        <div class="color-card babyblue-card">
-          <div class="color-swatch babyblue"></div>
-          <h3>Baby Blue</h3>
-          <button class="buy-btn babyblue-btn">Shop Now</button>
+        <div class="swatch baby-blue" title="Baby Blue #89CFF0">
+          <button class="try-btn baby-blue-btn save-btn" data-color="baby-blue">
+            💾 Save for Later
+          </button>
         </div>
       </div>
-    </div>
+    </main>
+
+    <footer>
+      <p>© 2026 ColorMatch Boutique</p>
+    </footer>
+
+    <script>
+      class ColorSaver {
+        constructor() {
+          this.init();
+        }
+
+        init() {
+          this.loadSavedColors();
+          document.querySelectorAll(".save-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => this.saveColor(e));
+          });
+        }
+
+        saveColor(e) {
+          e.preventDefault();
+          const btn = e.target;
+          const colorName = btn.dataset.color;
+
+          if (btn.classList.contains("saved")) {
+            this.removeColor(colorName);
+            btn.classList.remove("saved");
+            btn.innerHTML = "💾 Save for Later";
+            this.showNotification("Removed from Saved!", "error");
+          } else {
+            this.addColor(colorName);
+            btn.classList.add("saved");
+            btn.innerHTML = "✅ Saved!";
+            this.showNotification("Color saved for later!", "success");
+          }
+        }
+
+        addColor(colorName) {
+          const saved = JSON.parse(localStorage.getItem("savedColors") || "[]");
+          if (!saved.includes(colorName)) {
+            saved.push(colorName);
+            localStorage.setItem("savedColors", JSON.stringify(saved));
+          }
+        }
+
+        removeColor(colorName) {
+          let saved = JSON.parse(localStorage.getItem("savedColors") || "[]");
+          saved = saved.filter((color) => color !== colorName);
+          localStorage.setItem("savedColors", JSON.stringify(saved));
+        }
+
+        loadSavedColors() {
+          const saved = JSON.parse(localStorage.getItem("savedColors") || "[]");
+          document.querySelectorAll(".save-btn").forEach((btn) => {
+            if (saved.includes(btn.dataset.color)) {
+              btn.classList.add("saved");
+              btn.innerHTML = "✅ Saved!";
+            }
+          });
+        }
+
+        showNotification(message, type = "success") {
+          document
+            .querySelectorAll(".save-notification")
+            .forEach((n) => n.remove());
+          const notification = document.createElement("div");
+          notification.className = `save-notification ${type}`;
+          notification.innerHTML = message;
+          document.body.appendChild(notification);
+          setTimeout(() => notification.remove(), 3000);
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        new ColorSaver();
+      });
+    </script>
   </body>
 </html>

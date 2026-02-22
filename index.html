@@ -40,6 +40,16 @@
         <div id="skin-result" class="result"></div>
       </div>
 
+      <!-- 🔥 INTERACTIVE COLOR WHEEL - NEW! -->
+      <div class="color-wheel-section">
+        <h2>🎨 Explore All Colors</h2>
+        <canvas id="colorWheel" width="350" height="350"></canvas>
+        <div id="wheelMatches" class="wheel-matches"></div>
+        <button id="saveWheelColor" class="detect-btn" style="display: none">
+          💾 Save Best Match
+        </button>
+      </div>
+
       <!-- SKIN TYPE CARDS -->
       <a href="dusky.html" class="skin-card dusky-card">
         <h2>🌟 Dusky Skin</h2>
@@ -70,7 +80,7 @@
     </footer>
 
     <script>
-      // 🔥 SKIN TONE DETECTOR
+      // 🔥 SKIN TONE DETECTOR (YOUR EXISTING CODE)
       class SkinToneDetector {
         constructor() {
           this.video = document.getElementById("video");
@@ -166,18 +176,194 @@
 
           this.result.className = `result ${skinTone}`;
           this.result.innerHTML = `
-          🎉 Detected: <strong>${skinTone.charAt(0).toUpperCase() + skinTone.slice(1)} Skin</strong><br>
-          <a href="${pages[skinTone]}" class="detect-btn" style="margin-top: 1rem; display: inline-block;">✨ View My Colors</a>
-        `;
+            🎉 Detected: <strong>${skinTone.charAt(0).toUpperCase() + skinTone.slice(1)} Skin</strong><br>
+            <a href="${pages[skinTone]}" class="detect-btn" style="margin-top: 1rem; display: inline-block;">✨ View My Colors</a>
+          `;
         }
       }
 
-      // Saved colors count
+      // 🔥 INTERACTIVE COLOR WHEEL - NEW!
+      class ColorWheel {
+        constructor() {
+          this.canvas = document.getElementById("colorWheel");
+          this.ctx = this.canvas.getContext("2d");
+          this.matchesDiv = document.getElementById("wheelMatches");
+          this.saveBtn = document.getElementById("saveWheelColor");
+          this.isDragging = false;
+          this.centerX = 175;
+          this.centerY = 175;
+          this.radius = 160;
+
+          // ALL 16 COLORS FROM YOUR CSS
+          this.allColors = [
+            { name: "Deep Red", hex: "#8b0000" },
+            { name: "Emerald", hex: "#50c878" },
+            { name: "Royal Gold", hex: "#b8860b" },
+            { name: "Burgundy", hex: "#800020" },
+            { name: "Peach", hex: "#ffdab9" },
+            { name: "Coral", hex: "#ff7f50" },
+            { name: "Mustard", hex: "#ffdb58" },
+            { name: "Terracotta", hex: "#e2725b" },
+            { name: "Blue", hex: "#87ceeb" },
+            { name: "Silver", hex: "#c0c0c0" },
+            { name: "Lavender", hex: "#e6e6fa" },
+            { name: "Teal", hex: "#008080" },
+            { name: "Blush", hex: "#ffc0cb" },
+            { name: "Beige", hex: "#f5f5dc" },
+            { name: "Ivory", hex: "#fffff0" },
+            { name: "Baby Blue", hex: "#89cff0" },
+          ];
+
+          this.drawWheel();
+          this.addEventListeners();
+        }
+
+        drawWheel() {
+          // Rainbow gradient
+          const gradient = this.ctx.createLinearGradient(0, 0, 350, 0);
+          for (let i = 0; i < 7; i++) {
+            gradient.addColorStop(i / 6, `hsl(${i * 51.4},100%,50%)`);
+          }
+          this.ctx.fillStyle = gradient;
+          this.ctx.fillRect(0, 0, 350, 350);
+
+          // Glass overlay
+          this.ctx.fillStyle = "rgba(255,255,255,0.3)";
+          this.ctx.beginPath();
+          this.ctx.arc(this.centerX, this.centerY, this.radius, 0, Math.PI * 2);
+          this.ctx.fill();
+        }
+
+        addEventListeners() {
+          // Mouse events
+          this.canvas.addEventListener("mousedown", (e) => this.startDrag(e));
+          this.canvas.addEventListener("mousemove", (e) => this.drag(e));
+          this.canvas.addEventListener("mouseup", () => this.stopDrag());
+
+          // Touch events (mobile)
+          this.canvas.addEventListener("touchstart", (e) =>
+            this.startDrag(e.touches[0]),
+          );
+          this.canvas.addEventListener("touchmove", (e) =>
+            this.drag(e.touches[0]),
+          );
+          this.canvas.addEventListener("touchend", () => this.stopDrag());
+
+          this.saveBtn.addEventListener("click", () => this.saveBestMatch());
+        }
+
+        startDrag(e) {
+          this.isDragging = true;
+          this.updateColor(e);
+        }
+        drag(e) {
+          if (this.isDragging) this.updateColor(e);
+        }
+        stopDrag() {
+          this.isDragging = false;
+        }
+
+        updateColor(e) {
+          const rect = this.canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left - this.centerX;
+          const y = e.clientY - rect.top - this.centerY;
+          const angle = Math.atan2(y, x);
+          const hue = (((angle * 180) / Math.PI + 180) / 360) * 360;
+          const hex = `hsl(${Math.round(hue)},100%,50%)`;
+
+          // Draw pointer line
+          this.ctx.strokeStyle = hex;
+          this.ctx.lineWidth = 8;
+          this.ctx.lineCap = "round";
+          this.ctx.beginPath();
+          this.ctx.moveTo(this.centerX, this.centerY);
+          this.ctx.lineTo(
+            this.centerX + Math.cos(angle) * this.radius,
+            this.centerY + Math.sin(angle) * this.radius,
+          );
+          this.ctx.stroke();
+
+          this.findMatches(hex);
+        }
+
+        findMatches(pickedHex) {
+          const matches = this.allColors
+            .map((c) => ({
+              ...c,
+              score: 1 - this.colorDistance(pickedHex, c.hex),
+            }))
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 5);
+
+          this.matchesDiv.innerHTML = matches
+            .map(
+              (m) =>
+                `<div class="match-item" data-hex="${m.hex}">${m.name} ${Math.round(m.score * 100)}%</div>`,
+            )
+            .join("");
+
+          [...this.matchesDiv.children].forEach((el) => {
+            el.onclick = () => this.selectMatch(el.dataset.hex);
+          });
+
+          this.bestMatch = matches[0].hex;
+          this.saveBtn.style.display = "inline-block";
+        }
+
+        colorDistance(c1, c2) {
+          const rgb1 = this.hexToRgb(c1);
+          const rgb2 = this.hexToRgb(c2);
+          return (
+            Math.sqrt(
+              (rgb1.r - rgb2.r) ** 2 +
+                (rgb1.g - rgb2.g) ** 2 +
+                (rgb1.b - rgb2.b) ** 2,
+            ) / 441.67
+          );
+        }
+
+        hexToRgb(hex) {
+          const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+          return result
+            ? {
+                r: parseInt(result[1], 16) / 255,
+                g: parseInt(result[2], 16) / 255,
+                b: parseInt(result[3], 16) / 255,
+              }
+            : { r: 0, g: 0, b: 0 };
+        }
+
+        selectMatch(hex) {
+          alert(`Selected: ${hex} ✨`);
+        }
+
+        saveBestMatch() {
+          const saved = JSON.parse(localStorage.getItem("savedColors") || "[]");
+          saved.push({
+            color: this.bestMatch,
+            source: "wheel",
+            date: new Date().toISOString(),
+          });
+          localStorage.setItem("savedColors", JSON.stringify(saved));
+          document.getElementById("saved-count").textContent =
+            `(${saved.length})`;
+
+          // Toast notification
+          const toast = document.createElement("div");
+          toast.className = "save-notification show";
+          toast.textContent = `💎 Saved ${this.bestMatch}!`;
+          document.body.appendChild(toast);
+          setTimeout(() => toast.remove(), 2000);
+        }
+      }
+
+      // Initialize everything
       document.addEventListener("DOMContentLoaded", () => {
         const saved = JSON.parse(localStorage.getItem("savedColors") || "[]");
         document.getElementById("saved-count").textContent =
           `(${saved.length})`;
         new SkinToneDetector();
+        new ColorWheel();
       });
     </script>
   </body>

@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ColorMatch Boutique</title>
+    <title>ColorMatch Boutique - AI Skin Tone Detection</title>
+    <meta
+      name="description"
+      content="AI-powered color matching by skin tone with camera detection"
+    />
     <link rel="stylesheet" href="styles.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap"
@@ -13,10 +17,30 @@
   <body>
     <header>
       <h1>🛍️ ColorMatch Boutique</h1>
-      <p>Select Your Skin Tone</p>
+      <p>AI Skin Tone Detection + Perfect Color Matches</p>
     </header>
 
     <main class="home-grid">
+      <!-- 🔥 CAMERA SKIN DETECTION -->
+      <div class="camera-section">
+        <h2>📸 Instant Skin Detection</h2>
+        <p style="color: #666; margin-bottom: 1rem">
+          Hold phone 30cm from face → Click Analyze
+        </p>
+        <video
+          id="video"
+          autoplay
+          playsinline
+          muted
+          width="320"
+          height="240"
+        ></video>
+        <canvas id="canvas" style="display: none"></canvas>
+        <button id="detect-skin" class="detect-btn">🔍 Analyze My Skin</button>
+        <div id="skin-result" class="result"></div>
+      </div>
+
+      <!-- SKIN TYPE CARDS -->
       <a href="dusky.html" class="skin-card dusky-card">
         <h2>🌟 Dusky Skin</h2>
         <p>Jewel tones & deep shades</p>
@@ -42,15 +66,118 @@
     </div>
 
     <footer>
-      <p>© 2026 ColorMatch Boutique | Made with ❤️ for fashion lovers</p>
+      <p>© 2026 ColorMatch Boutique | AI-Powered by Camera Detection</p>
     </footer>
 
     <script>
-      // Update saved count on home page
+      // 🔥 SKIN TONE DETECTOR
+      class SkinToneDetector {
+        constructor() {
+          this.video = document.getElementById("video");
+          this.canvas = document.getElementById("canvas");
+          this.ctx = this.canvas.getContext("2d");
+          this.detectBtn = document.getElementById("detect-skin");
+          this.result = document.getElementById("skin-result");
+          this.initCamera();
+          this.detectBtn.addEventListener("click", () => this.detect());
+        }
+
+        async initCamera() {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: { width: 320, height: 240, facingMode: "user" },
+            });
+            this.video.srcObject = stream;
+          } catch (err) {
+            this.result.innerHTML = "📱 Enable camera for AI magic ✨";
+          }
+        }
+
+        detect() {
+          this.canvas.width = this.video.videoWidth;
+          this.canvas.height = this.video.videoHeight;
+          this.ctx.drawImage(this.video, 0, 0);
+
+          const imageData = this.ctx.getImageData(
+            0,
+            0,
+            this.canvas.width,
+            this.canvas.height,
+          );
+          const skinTone = this.analyzeSkin(imageData.data);
+          this.showResult(skinTone);
+        }
+
+        analyzeSkin(data) {
+          let r = 0,
+            g = 0,
+            b = 0,
+            skinPixels = 0;
+          const step = 4;
+          const totalPixels = (this.canvas.width * this.canvas.height) / step;
+
+          for (
+            let i = totalPixels * 0.25 * step;
+            i < totalPixels * 0.75 * step;
+            i += step
+          ) {
+            r = data[i];
+            g = data[i + 1];
+            b = data[i + 2];
+            if (this.isSkinColor(r, g, b)) {
+              r += 20;
+              g += 10;
+              b -= 10;
+              skinPixels++;
+            }
+          }
+
+          const avgR = r / Math.max(skinPixels, 1);
+          const avgG = g / Math.max(skinPixels, 1);
+          const avgB = b / Math.max(skinPixels, 1);
+
+          return this.classifySkinTone(avgR, avgG, avgB);
+        }
+
+        isSkinColor(r, g, b) {
+          r /= 255;
+          g /= 255;
+          b /= 255;
+          return r > 0.2 && g > 0.1 && b < 0.7 && r > g * 1.2 && r < b * 1.5;
+        }
+
+        classifySkinTone(r, g, b) {
+          const brightness = (r + g + b) / 3;
+          const warmth = (r - b) / (r + b + 0.1);
+
+          if (brightness > 0.65) return "light";
+          if (warmth > 0.15) return "warm";
+          if (brightness < 0.35) return "dusky";
+          return "cool";
+        }
+
+        showResult(skinTone) {
+          const pages = {
+            dusky: "dusky.html",
+            warm: "warm.html",
+            cool: "cool.html",
+            light: "light.html",
+          };
+
+          this.result.className = `result ${skinTone}`;
+          this.result.innerHTML = `
+          🎉 Detected: <strong>${skinTone.charAt(0).toUpperCase() + skinTone.slice(1)} Skin</strong><br>
+          <a href="${pages[skinTone]}" class="detect-btn" style="margin-top: 1rem; display: inline-block;">✨ View My Colors</a>
+        `;
+        }
+      }
+
+      // Saved colors count
       document.addEventListener("DOMContentLoaded", () => {
         const saved = JSON.parse(localStorage.getItem("savedColors") || "[]");
         document.getElementById("saved-count").textContent =
           `(${saved.length})`;
+        new SkinToneDetector();
       });
     </script>
   </body>
